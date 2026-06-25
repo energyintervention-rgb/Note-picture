@@ -157,7 +157,6 @@ main{flex:1;overflow-y:auto;}
 .btn-sel-all:active{background:var(--gray-light);}
 /* card select state */
 .gallery-card.sel-active{cursor:pointer;}
-.gallery-card.sel-active .card-actions{display:none;}
 .gallery-card.selected{border:2.5px solid var(--blue);}
 .thumb-wrap{position:relative;}
 .sel-check{
@@ -223,23 +222,7 @@ main{flex:1;overflow-y:auto;}
 .gallery-gps{font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px;word-break:break-all;text-decoration:none;}
 .gallery-gps svg{width:11px;height:11px;flex-shrink:0;}
 .gallery-gps.no-gps{color:var(--gray);}
-.card-actions{
-  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
-  gap:6px;padding:0 10px 10px;
-}
-.btn-action{
-  background:var(--gray-light);border:1px solid var(--border);
-  border-radius:8px;font-size:11px;font-weight:500;color:var(--text2);
-  padding:7px 4px;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  transition:background .12s;
-}
-.btn-action svg{width:15px;height:15px;flex-shrink:0;}
-.btn-action:active{background:var(--border);}
-.btn-action.red{background:var(--red-light);border-color:#ef9a9a;color:var(--red);}
-.btn-action.red:active{background:#ffcdd2;}
-.btn-action.blue{background:var(--blue-light);border-color:#90caf9;color:var(--blue-dark);}
-.btn-action.blue:active{background:#bbdefb;}
+
 /* Lightbox */
 #lightbox{
   display:none;position:fixed;inset:0;z-index:200;
@@ -532,7 +515,7 @@ function renderGallery(){
     const gpsHtml=e.gps
       ?`<a class="gallery-gps" href="https://www.google.com/maps?q=${e.gps.lat},${e.gps.lng}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>${e.gps.lat.toFixed(4)}, ${e.gps.lng.toFixed(4)}</a>`
       :`<span class="gallery-gps no-gps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>No GPS</span>`;
-    return `<div class="gallery-card" id="card-${e.id}" onclick="cardClick(${e.id})">
+    return `<div class="gallery-card" id="card-${e.id}" onclick="cardClick(${e.id})" style="cursor:pointer;">
       <div class="thumb-wrap">
         <img class="gallery-thumb" src="${e.photo}" alt="Photo" loading="lazy">
         <div class="sel-check">
@@ -544,20 +527,6 @@ function renderGallery(){
         ${noteHtml}
         <div class="gallery-ts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${ts}</div>
         ${gpsHtml}
-      </div>
-      <div class="card-actions">
-        <button class="btn-action blue" onclick="event.stopPropagation();viewEntry(${e.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
-        </button>
-        <button class="btn-action" onclick="event.stopPropagation();downloadEntry(${e.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save
-        </button>
-        <button class="btn-action" onclick="event.stopPropagation();shareEntry(${e.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
-        </button>
-        <button class="btn-action red" onclick="event.stopPropagation();deleteEntry(${e.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete
-        </button>
       </div>
     </div>`;
   }).join('');
@@ -726,7 +695,7 @@ async function bulkShare(){
   catch{showToast('Share not supported on this browser');}
 }
 
-function deleteEntry(id){saveEntries(loadEntries().filter(e=>e.id!==id));renderGallery();showToast('Deleted');}
+
 
 
 function formatTS(d){
