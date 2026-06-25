@@ -129,14 +129,73 @@ main{flex:1;overflow-y:auto;}
 }
 .btn-save:active{background:var(--blue-dark);transform:scale(.98);}
 .btn-save:disabled{background:#90caf9;cursor:not-allowed;}
-#gallery-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+#gallery-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;min-height:36px;}
 #gallery-count{font-size:14px;font-weight:600;color:var(--text);}
-.btn-delete-all{
-  background:var(--red-light);border:1.5px solid #ef9a9a;border-radius:20px;
-  color:var(--red);font-size:12px;font-weight:500;padding:5px 12px;
+/* normal mode header right */
+.btn-select-mode{
+  background:var(--blue-light);border:1.5px solid #90caf9;border-radius:20px;
+  color:var(--blue-dark);font-size:12px;font-weight:500;padding:5px 14px;
   cursor:pointer;display:flex;align-items:center;gap:5px;
 }
-.btn-delete-all:active{background:#ffcdd2;}
+.btn-select-mode:active{background:#bbdefb;}
+/* select mode header */
+#sel-header{display:none;align-items:center;justify-content:space-between;margin-bottom:12px;}
+#sel-header.show{display:flex;}
+.btn-cancel-sel{
+  background:#fff;border:1.5px solid var(--border);border-radius:20px;
+  color:var(--text);font-size:12px;font-weight:500;padding:5px 14px;cursor:pointer;
+}
+.btn-cancel-sel:active{background:var(--gray-light);}
+#sel-count-badge{
+  background:var(--blue);color:#fff;border-radius:20px;
+  font-size:12px;font-weight:600;padding:5px 14px;
+}
+.btn-sel-all{
+  background:#fff;border:1.5px solid var(--border);border-radius:20px;
+  color:var(--text2);font-size:12px;font-weight:500;padding:5px 14px;cursor:pointer;
+}
+.btn-sel-all:active{background:var(--gray-light);}
+/* card select state */
+.gallery-card.sel-active{cursor:pointer;}
+.gallery-card.sel-active .card-actions{display:none;}
+.gallery-card.selected{border:2.5px solid var(--blue);}
+.thumb-wrap{position:relative;}
+.sel-check{
+  display:none;position:absolute;top:7px;left:7px;
+  width:24px;height:24px;border-radius:50%;
+  border:2.5px solid #fff;background:rgba(0,0,0,.28);
+  align-items:center;justify-content:center;z-index:2;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+.sel-check svg{width:13px;height:13px;stroke:#fff;}
+.gallery-card.sel-active .sel-check{display:flex;}
+.gallery-card.selected .sel-check{background:var(--blue);border-color:var(--blue);}
+.sel-overlay{
+  display:none;position:absolute;inset:0;
+  background:rgba(33,150,243,.18);pointer-events:none;
+}
+.gallery-card.selected .sel-overlay{display:block;}
+/* bottom action bar */
+#bulk-bar{
+  display:none;
+  position:sticky;bottom:calc(14px + var(--safe-bottom));
+  background:#fff;border:1.5px solid var(--border);
+  border-radius:16px;padding:10px;
+  gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.12);
+  margin-top:12px;
+}
+#bulk-bar.show{display:flex;}
+.bulk-btn{
+  flex:1;border-radius:10px;font-size:12px;font-weight:500;
+  padding:10px 4px;display:flex;flex-direction:column;
+  align-items:center;gap:4px;cursor:pointer;border:1.5px solid var(--border);
+  background:var(--gray-light);color:var(--text2);transition:opacity .12s;
+}
+.bulk-btn svg{width:20px;height:20px;}
+.bulk-btn:active{opacity:.7;}
+.bulk-btn.green{background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32;}
+.bulk-btn.blue{background:var(--blue-light);border-color:#90caf9;color:var(--blue-dark);}
+.bulk-btn.red{background:var(--red-light);border-color:#ef9a9a;color:var(--red);}
 #gallery-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
@@ -279,13 +338,36 @@ main{flex:1;overflow-y:auto;}
     </button>
   </div>
   <div class="screen" id="screen-gallery">
+    <!-- normal header -->
     <div id="gallery-header">
       <span id="gallery-count">Gallery</span>
-      <button class="btn-delete-all" onclick="deleteAll()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete All
+      <button class="btn-select-mode" onclick="enterSelectMode()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Select
       </button>
     </div>
+    <!-- select mode header -->
+    <div id="sel-header">
+      <button class="btn-cancel-sel" onclick="exitSelectMode()">Cancel</button>
+      <span id="sel-count-badge">0 selected</span>
+      <button class="btn-sel-all" id="btn-sel-all" onclick="toggleSelectAll()">Select All</button>
+    </div>
     <div id="gallery-grid"></div>
+    <!-- bulk action bar -->
+    <div id="bulk-bar">
+      <button class="bulk-btn green" onclick="bulkDownload()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save
+      </button>
+      <button class="bulk-btn blue" onclick="bulkShare()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+      <button class="bulk-btn red" onclick="bulkDelete()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+    </div>
   </div>
 </main>
 <div id="toast"></div>
@@ -450,24 +532,30 @@ function renderGallery(){
     const gpsHtml=e.gps
       ?`<a class="gallery-gps" href="https://www.google.com/maps?q=${e.gps.lat},${e.gps.lng}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>${e.gps.lat.toFixed(4)}, ${e.gps.lng.toFixed(4)}</a>`
       :`<span class="gallery-gps no-gps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>No GPS</span>`;
-    return `<div class="gallery-card" id="card-${e.id}">
-      <img class="gallery-thumb" src="${e.photo}" alt="Photo" loading="lazy" onclick="viewEntry(${e.id})" style="cursor:pointer;">
+    return `<div class="gallery-card" id="card-${e.id}" onclick="cardClick(${e.id})">
+      <div class="thumb-wrap">
+        <img class="gallery-thumb" src="${e.photo}" alt="Photo" loading="lazy">
+        <div class="sel-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sel-overlay"></div>
+      </div>
       <div class="gallery-info">
         ${noteHtml}
         <div class="gallery-ts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${ts}</div>
         ${gpsHtml}
       </div>
       <div class="card-actions">
-        <button class="btn-action blue" onclick="viewEntry(${e.id})">
+        <button class="btn-action blue" onclick="event.stopPropagation();viewEntry(${e.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
         </button>
-        <button class="btn-action" onclick="downloadEntry(${e.id})">
+        <button class="btn-action" onclick="event.stopPropagation();downloadEntry(${e.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save
         </button>
-        <button class="btn-action" onclick="shareEntry(${e.id})">
+        <button class="btn-action" onclick="event.stopPropagation();shareEntry(${e.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
         </button>
-        <button class="btn-action red" onclick="deleteEntry(${e.id})">
+        <button class="btn-action red" onclick="event.stopPropagation();deleteEntry(${e.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete
         </button>
       </div>
@@ -533,12 +621,113 @@ async function shareEntry(id){
   }
 }
 
-function deleteEntry(id){saveEntries(loadEntries().filter(e=>e.id!==id));renderGallery();showToast('Deleted');}
-function deleteAll(){
-  if(!loadEntries().length){showToast('Gallery is empty');return;}
-  if(!confirm('Delete all photos and notes? This cannot be undone.'))return;
-  saveEntries([]);renderGallery();showToast('Gallery cleared');
+// ── Select mode ──
+let selMode=false;
+let selIds=new Set();
+
+function enterSelectMode(){
+  selMode=true; selIds.clear();
+  document.getElementById('gallery-header').style.display='none';
+  document.getElementById('sel-header').classList.add('show');
+  document.getElementById('bulk-bar').classList.add('show');
+  document.querySelectorAll('.gallery-card').forEach(c=>c.classList.add('sel-active'));
+  updateSelUI();
 }
+
+function exitSelectMode(){
+  selMode=false; selIds.clear();
+  document.getElementById('gallery-header').style.display='flex';
+  document.getElementById('sel-header').classList.remove('show');
+  document.getElementById('bulk-bar').classList.remove('show');
+  document.querySelectorAll('.gallery-card').forEach(c=>{
+    c.classList.remove('sel-active','selected');
+  });
+}
+
+function cardClick(id){
+  if(!selMode){viewEntry(id);return;}
+  const card=document.getElementById('card-'+id);
+  if(selIds.has(id)){selIds.delete(id);card.classList.remove('selected');}
+  else{selIds.add(id);card.classList.add('selected');}
+  updateSelUI();
+}
+
+function toggleSelectAll(){
+  const all=loadEntries().map(e=>e.id);
+  const allSelected=all.every(id=>selIds.has(id));
+  if(allSelected){
+    selIds.clear();
+    document.querySelectorAll('.gallery-card').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('btn-sel-all').textContent='Select All';
+  }else{
+    all.forEach(id=>selIds.add(id));
+    document.querySelectorAll('.gallery-card').forEach(c=>c.classList.add('selected'));
+    document.getElementById('btn-sel-all').textContent='Deselect All';
+  }
+  updateSelUI();
+}
+
+function updateSelUI(){
+  const n=selIds.size;
+  document.getElementById('sel-count-badge').textContent=n===0?'None selected':`${n} selected`;
+  const all=loadEntries().map(e=>e.id);
+  const allSel=all.length>0&&all.every(id=>selIds.has(id));
+  document.getElementById('btn-sel-all').textContent=allSel?'Deselect All':'Select All';
+  const bar=document.getElementById('bulk-bar');
+  bar.querySelectorAll('.bulk-btn').forEach(b=>b.style.opacity=n===0?'0.4':'1');
+}
+
+function bulkDelete(){
+  if(!selIds.size){showToast('Nothing selected');return;}
+  if(!confirm(`Delete ${selIds.size} photo${selIds.size>1?'s':''}? This cannot be undone.`))return;
+  saveEntries(loadEntries().filter(e=>!selIds.has(e.id)));
+  showToast(`Deleted ${selIds.size} photo${selIds.size>1?'s':''}`);
+  exitSelectMode();
+  renderGallery();
+}
+
+function bulkDownload(){
+  if(!selIds.size){showToast('Nothing selected');return;}
+  const entries=loadEntries().filter(e=>selIds.has(e.id));
+  entries.forEach((e,i)=>{
+    setTimeout(()=>{
+      const ts=new Date(e.timestamp);
+      const fname=`NotePic_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}${String(ts.getDate()).padStart(2,'0')}_${String(ts.getHours()).padStart(2,'0')}${String(ts.getMinutes()).padStart(2,'0')}${String(ts.getSeconds()).padStart(2,'0')}.jpg`;
+      const a=document.createElement('a');a.href=e.photo;a.download=fname;a.click();
+    },i*400);
+  });
+  showToast(`Saving ${entries.length} photo${entries.length>1?'s':''}\u2026`);
+}
+
+async function bulkShare(){
+  if(!selIds.size){showToast('Nothing selected');return;}
+  const entries=loadEntries().filter(e=>selIds.has(e.id));
+  if(entries.length===1){await shareEntry(entries[0].id);return;}
+  // Multi: share text summary + try files
+  const text=entries.map(e=>{
+    const ts=formatTS(new Date(e.timestamp));
+    const gps=e.gps?` | ${e.gps.lat.toFixed(5)},${e.gps.lng.toFixed(5)}`:'';
+    return `${e.note?e.note:'(no note)'} | ${ts}${gps}`;
+  }).join('\n');
+  if(navigator.share){
+    try{
+      const files=[];
+      for(const e of entries){
+        const res=await fetch(e.photo);const blob=await res.blob();
+        files.push(new File([blob],`notepic-${e.id}.jpg`,{type:'image/jpeg'}));
+      }
+      if(navigator.canShare&&navigator.canShare({files})){
+        await navigator.share({files,title:'Note Picture',text});return;
+      }
+    }catch(err){}
+    try{await navigator.share({title:'Note Picture',text});return;}catch(err){}
+  }
+  try{await navigator.clipboard.writeText(text);showToast('Copied to clipboard \u2713');}
+  catch{showToast('Share not supported on this browser');}
+}
+
+function deleteEntry(id){saveEntries(loadEntries().filter(e=>e.id!==id));renderGallery();showToast('Deleted');}
+
 
 function formatTS(d){
   return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
