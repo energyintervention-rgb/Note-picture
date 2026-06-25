@@ -15,7 +15,7 @@
 <style>
 :root{
   --blue:#2196f3;--blue-dark:#1565c0;--blue-light:#e3f2fd;
-  --red:#e53935;--red-light:#ffebee;--green-light:#e8f5e9;
+  --red:#e53935;--red-light:#ffebee;
   --gray:#757575;--gray-light:#f5f5f5;
   --border:#e0e0e0;--text:#212121;--text2:#616161;
   --radius:14px;--radius-sm:10px;
@@ -109,7 +109,6 @@ main{flex:1;overflow-y:auto;}
 .bulk-btn{flex:1;border-radius:10px;font-size:12px;font-weight:500;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;border:1.5px solid var(--border);background:var(--gray-light);color:var(--text2);transition:opacity .12s;}
 .bulk-btn svg{width:20px;height:20px;}
 .bulk-btn:active{opacity:.7;}
-.bulk-btn.green{background:var(--green-light);border-color:#a5d6a7;color:#2e7d32;}
 .bulk-btn.blue{background:var(--blue-light);border-color:#90caf9;color:var(--blue-dark);}
 .bulk-btn.red{background:var(--red-light);border-color:#ef9a9a;color:var(--red);}
 /* Lightbox */
@@ -202,9 +201,6 @@ main{flex:1;overflow-y:auto;}
     </div>
     <div id="gallery-grid"></div>
     <div id="bulk-bar">
-      <button class="bulk-btn green" onclick="bulkDownload()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save
-      </button>
       <button class="bulk-btn blue" onclick="bulkShare()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
       </button>
@@ -221,9 +217,6 @@ main{flex:1;overflow-y:auto;}
   </button>
   <img id="lightbox-img" alt="Full photo" onclick="closeLightbox()">
   <div id="lightbox-actions">
-    <button class="lb-btn" id="lb-save-btn" onclick="lbDownload()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save
-    </button>
     <button class="lb-btn" id="lb-share-btn" onclick="lbShare()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
     </button>
@@ -430,12 +423,6 @@ function closeLightbox(){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
 
-function lbDownload(){
-  if(!lbCurrentId)return;
-  const e=loadEntries().find(e=>e.id===lbCurrentId);
-  if(!e)return;
-  downloadPhoto(e);
-}
 async function lbShare(){
   if(!lbCurrentId)return;
   const e=loadEntries().find(e=>e.id===lbCurrentId);
@@ -443,12 +430,7 @@ async function lbShare(){
   await shareOne(e);
 }
 
-// ---- DOWNLOAD / SHARE HELPERS ----
-function downloadPhoto(e){
-  const ts=new Date(e.timestamp);
-  const fname='NotePic_'+ts.getFullYear()+String(ts.getMonth()+1).padStart(2,'0')+String(ts.getDate()).padStart(2,'0')+'_'+String(ts.getHours()).padStart(2,'0')+String(ts.getMinutes()).padStart(2,'0')+String(ts.getSeconds()).padStart(2,'0')+'.jpg';
-  const a=document.createElement('a');a.href=e.photo;a.download=fname;a.click();
-}
+// ---- SHARE HELPER ----
 async function shareOne(e){
   const ts=formatTS(new Date(e.timestamp));
   const gpsLine=e.gps?'\nGPS: '+e.gps.lat.toFixed(5)+', '+e.gps.lng.toFixed(5)+' (+-'+Math.round(e.gps.acc)+'m)':'';
@@ -510,12 +492,6 @@ function bulkDelete(){
   saveEntries(loadEntries().filter(e=>!selIds.has(e.id)));
   showToast('Deleted '+selIds.size+' photo'+(selIds.size>1?'s':''));
   exitSelectMode();renderGallery();
-}
-function bulkDownload(){
-  if(!selIds.size){showToast('Nothing selected');return;}
-  const entries=loadEntries().filter(e=>selIds.has(e.id));
-  entries.forEach((e,i)=>setTimeout(()=>downloadPhoto(e),i*400));
-  showToast('Saving '+entries.length+' photo'+(entries.length>1?'s...':'...'));
 }
 async function bulkShare(){
   if(!selIds.size){showToast('Nothing selected');return;}
